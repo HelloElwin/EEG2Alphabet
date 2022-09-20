@@ -28,8 +28,10 @@ class Coach:
 
     def prepare_model(self):
         self.encoder = Encoder().cuda()
+        self.classifier = Classifier().cuda()
         self.opt = t.optim.Adam(
-            [{"params": self.encoder.parameters()}],
+            [{"params": self.encoder.parameters()},
+            {"params": self.encoder.parameters()}],
             lr=args.lr, weight_decay=0
         )
 
@@ -39,6 +41,12 @@ class Coach:
         steps = trn_loader.dataset.__len__() // args.trn_batch
         for i, batch_data in enumerate(trn_loader):
             batch_data = [x.cuda() for x in batch_data]
+
+            mat, label = batch_data
+
+            convolutional_embed = self.encoder(mat)
+            # sequential_embed = 
+            pred = 
 
             loss_regu = calc_reg_loss(self.encoder) * args.reg
             loss_main = 0 # todo 

@@ -6,14 +6,9 @@ import scipy.io as scio
 
 File_path = './data_EEG_AI.mat'
 
-# data.Dataset
-
 class EEGDataset():
     def __init__(self):
-        # self.raw = raw
         self.raw_info = scio.loadmat(File_path)
-        # for i in self.raw:
-            # print(i)
         self.raw = self.raw_info["data"] # (24, 801, 7800)
         self.raw = np.swapaxes(self.raw, 0, -1)
         self.label = np.squeeze(self.raw_info["label"])
@@ -22,6 +17,6 @@ class EEGDataset():
         return len(self.raw.shape[0])
 
     def __getitem__(self, index):
-        return self.raw[index]
+        return (t.tensor(self.raw[index]), t.tensor(self.label[index]))
 
 a = EEGDataset()

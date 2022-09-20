@@ -6,11 +6,8 @@ import torch as t
 init = nn.init.xavier_uniform_
 uniform_init = nn.init.uniform
 
-inpChannel = 24
-outClass = 26
-
 class Encoder(nn.Module):
-    def __init__(self):
+    def __init__(self, inpChannel=24):
         super(Encoder, self).__init__()
         self.layer0 = nn.Sequential(
             nn.Conv2d(inpChannel, 64, kernel_size=7, stride=2, padding=3),
@@ -54,15 +51,6 @@ class Encoder(nn.Module):
             input_ = self.fc(input_)
 
             return input_
-    
-
-    def get_ego_embeds(self):
-        return self.item_emb
-
-    def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
-        return x
 
 class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, downsample):
