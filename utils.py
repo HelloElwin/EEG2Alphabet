@@ -10,9 +10,9 @@ def calc_reg_loss(model):
 		ret += W.norm(2).square()
 	return ret
 
-def log(info, oneline=False):
+def log(info, online=False):
 	time = datetime.datetime.now()
 	info = f'{time} {info}'
-	if oneline: print(info, end='\r')
+	if online: print(info, end='\r')
 	else: print(info)
 	sys.stdout.flush()

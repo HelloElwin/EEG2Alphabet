@@ -1,4 +1,4 @@
-from data import EEGDataset, split_data
+from data import EEGDataset, split_dataset
 import torch.utils.data as dataloader
 from params import args
 from model import *
@@ -7,12 +7,12 @@ import numpy as np
 import torch as t
 
 class Coach:
-    def __init__(self, raw_data):
-        trn_data, tst_data = split_data(raw_data, 0.1)
-        self.trn_data = EEGDataset(trn_data)
-        self.tst_data = EEGDataset(tst_data)
+    def __init__(self):
+        # trn_data, tst_data = split_dataset(raw_data, 0.1)
+        self.trn_data = EEGDataset()
+        # self.tst_data = EEGDataset(tst_data)
         self.trn_loader = dataloader.DataLoader(self.trn_data, batch_size=args.trn_batch, shuffle=True)
-        self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
+        # self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
         log('Loaded Data (=ﾟωﾟ)ﾉ')
         
     def run(self):
@@ -34,21 +34,26 @@ class Coach:
         self.loss_func = nn.CrossEntropyLoss()
         self.opt = t.optim.Adam(
             [{"params": self.encoder.parameters()},
-            {"params": self.encoder.parameters()}],
+            {"params": self.classifier.parameters()}],
             lr=args.lr, weight_decay=0
         )
 
     def train_epoch(self):
         ep_loss, ep_loss_main = 0, 0
-        trn_loader = self.handler.trn_loader
+        trn_loader = self.trn_loader
         steps = trn_loader.dataset.__len__() // args.trn_batch
         for i, batch_data in enumerate(trn_loader):
             batch_data = [x.cuda() for x in batch_data]
 
             mat, label = batch_data
+            # print('=== mat shape', mat.shape)
+            mat = t.squeeze(mat)
+            mat = t.unsqueeze(mat, axis=1)
+            # print('=== mat shape', mat.shape)
 
             convolutional_embed = self.encoder(mat)
             # sequential_embed = 
+            # print('=== embed shape', convolutional_embed.shape)
             final_embed = convolutional_embed # todo
             pred = self.classifier(final_embed)
 
@@ -71,7 +76,7 @@ class Coach:
         return res
 
     def test_epoch(self):
-        tst_loader = self.handler.tst_loader
+        tst_loader = self.tst_loader
         ep_loss = 0
         num = tst_loader.dataset.__len__()
         steps = num // args.tst_batch
