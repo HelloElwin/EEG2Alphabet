@@ -21,6 +21,8 @@ class Coach:
             res = self.train_epoch()
             log(f'Train {ep}/{args.tst_epoch} {res}')
             if ep % args.tst_epoch == 0:
+                log(f'Test skipped O.O')
+                continue
                 res = self.test_epoch()
                 log(f'Test {ep}/{args.tst_epoch} {res}')
         res = self.test_epoch()
@@ -29,6 +31,7 @@ class Coach:
     def prepare_model(self):
         self.encoder = Encoder().cuda()
         self.classifier = Classifier().cuda()
+        self.loss_func = nn.CrossEntropyLoss()
         self.opt = t.optim.Adam(
             [{"params": self.encoder.parameters()},
             {"params": self.encoder.parameters()}],
@@ -46,10 +49,11 @@ class Coach:
 
             convolutional_embed = self.encoder(mat)
             # sequential_embed = 
-            pred = 
+            final_embed = convolutional_embed # todo
+            pred = self.classifier(final_embed)
 
-            loss_regu = calc_reg_loss(self.encoder) * args.reg
-            loss_main = 0 # todo 
+            loss_main = self.loss_func(pred, label)
+            loss_regu = (calc_reg_loss(self.encoder) * calc_reg_loss(self.classifier)) * args.reg
             loss = loss_main + loss_regu
 
             ep_loss += loss.item()

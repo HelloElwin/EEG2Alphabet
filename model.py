@@ -6,6 +6,14 @@ import torch as t
 init = nn.init.xavier_uniform_
 uniform_init = nn.init.uniform
 
+class Classifier(nn.Module):
+    def __init__(self, hidden_dim=512, num_classes=26):
+        super(Classifier, self).__init__()
+        self.mlp = nn.Linear(hidden_dim, num_classes)
+    
+    def forward(self, emb):
+        return self.mlp(emb)
+
 class Encoder(nn.Module):
     def __init__(self, inpChannel=24):
         super(Encoder, self).__init__()
