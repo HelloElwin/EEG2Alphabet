@@ -12,6 +12,12 @@ class EEGDataset():
         self.raw = self.raw_info["data"] # (24, 801, 7800)
         self.raw = np.swapaxes(self.raw, 0, -1)
         self.label = np.squeeze(self.raw_info["label"])
+        self.newLabel = np.zeros((7800, 26))
+        self.newLabel[list(range(7800)), self.label - 1] = 1
+        # for i in range(200, 400):
+            # print(self.newLabel[i])
+        self.label = self.newLabel
+            
 
     def __len__(self):
         return len(self.raw.shape[0])
