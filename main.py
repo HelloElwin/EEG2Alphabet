@@ -60,7 +60,8 @@ class Coach:
 
             loss_main = self.loss_func(pred, label)
             loss_regu = (calc_reg_loss(self.encoder1) + calc_reg_loss(self.encoder2) + calc_reg_loss(self.classifier)) * args.reg
-            loss = loss_main + loss_regu
+            loss_cont = calculate_contrastive_loss(convolutional_embed, sequential_embed) * args.cl_reg
+            loss = loss_main + loss_regu + loss_cont
 
             ep_loss += loss.item()
             ep_loss_main += loss_main.item()
