@@ -8,7 +8,7 @@ init = nn.init.xavier_uniform_
 uniform_init = nn.init.uniform
 
 class Classifier(nn.Module):
-    def __init__(self, hidden_dim=256, num_classes=26):
+    def __init__(self, hidden_dim=64, num_classes=26):
         super(Classifier, self).__init__()
         self.mlp = nn.Linear(hidden_dim, num_classes)
     
@@ -43,21 +43,21 @@ class ResNetEncoder(nn.Module):
     def __init__(self, inpChannel=1, resblock=ResBlock):
         super(ResNetEncoder, self).__init__()
         self.layer0 = nn.Sequential(
-            nn.Conv2d(inpChannel, 64, kernel_size=7, stride=2, padding=3),
+            nn.Conv2d(inpChannel, 32, kernel_size=7, stride=2, padding=3),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-            nn.BatchNorm2d(64),
+            nn.BatchNorm2d(32),
             nn.ReLU()
         )
 
         self.layer1 = nn.Sequential(
-            resblock(64, 64, downsample=False),
+            resblock(32, 64, downsample=True),
             resblock(64, 64, downsample=False)
         )
 
-        self.layer2 = nn.Sequential(
-            resblock(64, 128, downsample=True),
-            resblock(128, 128, downsample=False)
-        )
+        # self.layer2 = nn.Sequential(
+        #     resblock(64, 128, downsample=True),
+        #     resblock(128, 128, downsample=False)
+        # )
 
         # self.layer3 = nn.Sequential(
         #     resblock(128, 256, downsample=True),
@@ -75,7 +75,7 @@ class ResNetEncoder(nn.Module):
     def forward(self, input_):
         input_ = self.layer0(input_)
         input_ = self.layer1(input_)
-        input_ = self.layer2(input_)
+        # input_ = self.layer2(input_)
         # input_ = self.layer3(input_)
         # input_ = self.layer4(input_)
         input_ = self.gap(input_)
@@ -87,8 +87,8 @@ class TransformerEncoder(nn.Module):
     def __init__(self, feature_dim=24):
         super(TransformerEncoder, self).__init__()
         self.layers = nn.Sequential(
-            TransformerLayer(in_dim=feature_dim, out_dim=64,  num_heads=4),
-            TransformerLayer(in_dim=64,          out_dim=128, num_heads=4)
+            TransformerLayer(in_dim=feature_dim, out_dim=64,  num_heads=4)
+            # TransformerLayer(in_dim=64,          out_dim=128, num_heads=4),
             # TransformerLayer(in_dim=128,         out_dim=256, num_heads=4)
         )
 
@@ -101,8 +101,8 @@ class TransformerEncoder(nn.Module):
 class TransformerLayer(nn.Module):
     def __init__(self, in_dim, out_dim, num_heads):
         super(TransformerLayer, self).__init__()
-        self.attention = SelfAttentionLayer(in_dim, num_heads, dropout_prob=0.3)
-        self.intermediate = IntermediateLayer(in_dim, out_dim, dropout_prob=0.1)
+        self.attention = SelfAttentionLayer(in_dim, num_heads, dropout_prob=0.4)
+        self.intermediate = IntermediateLayer(in_dim, out_dim, dropout_prob=0.3)
 
     def forward(self, x):
         attention_output = self.attention(x)

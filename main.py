@@ -1,6 +1,5 @@
 from data import EEGDataset, get_datasets
 import torch.utils.data as dataloader
-from setproctitle import setproctitle
 from params import args
 from model import *
 from utils import *
@@ -9,8 +8,6 @@ import torch as t
 
 t.manual_seed(19260817)
 np.random.seed(19260817)
-
-setproctitle('eeg@elwin')
 
 class Coach:
     def __init__(self):
@@ -23,11 +20,10 @@ class Coach:
         self.prepare_model()
         for ep in range(args.trn_epoch):
             res = self.train_epoch()
-            log(f'Train {ep}/{args.tst_epoch} {res}')
+            log(f'Train {ep}/{args.trn_epoch} {res}')
             if ep % args.tst_epoch == 0:
-                log(f'Test skipped O.O')
                 res = self.test_epoch()
-                log(f'Test {ep}/{args.tst_epoch} {res}')
+                log(f'Test {ep}/{args.trn_epoch} {res}')
         res = self.test_epoch()
         log(f'Final Test {res}')
 
@@ -35,6 +31,7 @@ class Coach:
         self.encoder1 = ResNetEncoder().cuda()
         self.encoder2 = TransformerEncoder().cuda()
         self.classifier = Classifier().cuda()
+        # self.contrastive = ContrastiveLearning()
         self.loss_func = nn.CrossEntropyLoss()
         self.opt = t.optim.Adam(
             [{"params": self.encoder1.parameters()},
@@ -55,13 +52,14 @@ class Coach:
 
             convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
             sequential_embed = self.encoder2(mat)
-            final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
+            # final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
+            final_embed = sequential_embed
             pred = self.classifier(final_embed)
 
             loss_main = self.loss_func(pred, label)
             loss_regu = (calc_reg_loss(self.encoder1) + calc_reg_loss(self.encoder2) + calc_reg_loss(self.classifier)) * args.reg
-            loss_cont = calc_contrastive_loss(convolutional_embed, sequential_embed) * args.cl_reg
-            loss = loss_main + loss_regu + loss_cont
+            # loss_cont = calc_contrastive_loss(convolutional_embed, sequential_embed) * args.cl_reg # todo this is wrong
+            loss = loss_main + loss_regu # + loss_cont
 
             ep_loss += loss.item()
             ep_loss_main += loss_main.item()
@@ -90,10 +88,11 @@ class Coach:
             convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
             sequential_embed = self.encoder2(mat)
             final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
+            final_embed = sequential_embed
             pred = self.classifier(final_embed)
+            pred = (pred == t.max(pred, dim=-1, keepdim=True)[0])
 
-            print('=== check shape', pred.shape, label.shape)
-            prec = t.sum(label == pred)
+            prec = t.sum(label * pred).item()
             ep_prec += prec
             log(f'Step {i}/{steps}: precision = {prec:.3f}', online=True)
         res = dict()
@@ -103,8 +102,6 @@ class Coach:
 if __name__ == '__main__':
 
     log('Start \(≧▽≦)/')
-
-    # load data
 
     coach = Coach()
     coach.run()
