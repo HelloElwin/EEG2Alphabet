@@ -8,12 +8,25 @@ init = nn.init.xavier_uniform_
 uniform_init = nn.init.uniform
 
 class Classifier(nn.Module):
+    """
+    Input: embedding of EEG samples
+    Method: simple Multi Layer Perceptron
+    Output: predictions (batch_size, 26)
+    """
     def __init__(self, hidden_dim=64, num_classes=26):
         super(Classifier, self).__init__()
-        self.mlp = nn.Linear(hidden_dim, num_classes)
+        self.hidden_dim = hidden_dim
+        self.num_classes = num_classes
+        self.mlp1 = nn.Linear(self.hidden_dim, 32)
+        self.mlp2 = nn.Linear(self.hidden_dim, 32)
+        self.mlp3 = nn.Linear(64, num_classes)
     
-    def forward(self, emb):
-        return self.mlp(emb)
+    def forward(self, emb1, emb2):
+        emb1 = self.mlp1(emb1)
+        emb2 = self.mlp2(emb2)
+        final_emb = t.cat([emb1, emb2], dim=-1)
+        pred = self.mlp3(final_emb)
+        return pred
 
 class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, downsample):
@@ -54,21 +67,21 @@ class ResNetEncoder(nn.Module):
             resblock(64, 64, downsample=False)
         )
 
-        # self.layer2 = nn.Sequential(
-        #     resblock(64, 128, downsample=True),
-        #     resblock(128, 128, downsample=False)
-        # )
+        self.layer2 = nn.Sequential(
+            resblock(64, 128, downsample=True),
+            resblock(128, 128, downsample=False)
+        )
 
-        # self.layer3 = nn.Sequential(
-        #     resblock(128, 256, downsample=True),
-        #     resblock(256, 256, downsample=False)
-        # )
+        self.layer3 = nn.Sequential(
+            resblock(128, 256, downsample=True),
+            resblock(256, 256, downsample=False)
+        )
 
 
-        # self.layer4 = nn.Sequential(
-        #     resblock(256, 512, downsample=True),
-        #     resblock(512, 512, downsample=False)
-        # )
+        self.layer4 = nn.Sequential(
+            resblock(256, 512, downsample=True),
+            resblock(512, 512, downsample=False)
+        )
 
         self.gap = t.nn.AdaptiveAvgPool2d(1)
 
@@ -87,8 +100,8 @@ class TransformerEncoder(nn.Module):
     def __init__(self, feature_dim=24):
         super(TransformerEncoder, self).__init__()
         self.layers = nn.Sequential(
-            TransformerLayer(in_dim=feature_dim, out_dim=64,  num_heads=4)
-            # TransformerLayer(in_dim=64,          out_dim=128, num_heads=4),
+            TransformerLayer(in_dim=feature_dim, out_dim=32,  num_heads=4),
+            TransformerLayer(in_dim=32,          out_dim=64, num_heads=4)
             # TransformerLayer(in_dim=128,         out_dim=256, num_heads=4)
         )
 
@@ -101,8 +114,8 @@ class TransformerEncoder(nn.Module):
 class TransformerLayer(nn.Module):
     def __init__(self, in_dim, out_dim, num_heads):
         super(TransformerLayer, self).__init__()
-        self.attention = SelfAttentionLayer(in_dim, num_heads, dropout_prob=0.4)
-        self.intermediate = IntermediateLayer(in_dim, out_dim, dropout_prob=0.3)
+        self.attention = SelfAttentionLayer(in_dim, num_heads, dropout_prob=0.3)
+        self.intermediate = IntermediateLayer(in_dim, out_dim, dropout_prob=0.1)
 
     def forward(self, x):
         attention_output = self.attention(x)

@@ -28,6 +28,11 @@ class Coach:
         log(f'Final Test {res}')
 
     def prepare_model(self):
+        """
+        self.encoders are used to encode representations(embeddings) for each EEG sample
+        self.classifier is used to classify the embeddings
+        self.contrastive is used for contrastive learning (todo)
+        """
         self.encoder1 = ResNetEncoder().cuda()
         self.encoder2 = TransformerEncoder().cuda()
         self.classifier = Classifier().cuda()
@@ -41,23 +46,24 @@ class Coach:
         )
 
     def train_epoch(self):
-        ep_loss, ep_loss_main = 0, 0
+        ep_loss, ep_loss_main, ep_prec = 0, 0, 0
         trn_loader = self.trn_loader
         steps = trn_loader.dataset.__len__() // args.trn_batch
         for i, batch_data in enumerate(trn_loader):
             batch_data = [x.cuda() for x in batch_data]
 
             mat, label = batch_data
-            mat = t.squeeze(mat)
+            mat = t.squeeze(mat) # a batch of EEG samples, (batch_size, num_time_points, num_electrodes)
 
             convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
             sequential_embed = self.encoder2(mat)
             # final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
-            final_embed = sequential_embed
-            pred = self.classifier(final_embed)
+            pred = self.classifier(convolutional_embed, sequential_embed)
 
-            loss_main = self.loss_func(pred, label)
-            loss_regu = (calc_reg_loss(self.encoder1) + calc_reg_loss(self.encoder2) + calc_reg_loss(self.classifier)) * args.reg
+            loss_main = self.loss_func(pred, label) # classification loss
+            loss_regu = (calc_reg_loss(self.encoder1) + \
+                    calc_reg_loss(self.encoder2) + \
+                    calc_reg_loss(self.classifier)) * args.reg # weight regulation loss
             # loss_cont = calc_contrastive_loss(convolutional_embed, sequential_embed) * args.cl_reg # todo this is wrong
             loss = loss_main + loss_regu # + loss_cont
 
@@ -69,9 +75,14 @@ class Coach:
             loss.backward()
             self.opt.step()
 
+            pred = (pred == t.max(pred, dim=-1, keepdim=True)[0])
+            prec = t.sum(label * pred).item()
+            ep_prec += prec
+
         res = dict()
         res['loss'] = ep_loss / steps
         res['loss_main'] = ep_loss_main / steps
+        res['precision'] = ep_prec / trn_loader.dataset.__len__()
 
         return res
 
@@ -87,9 +98,8 @@ class Coach:
 
             convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
             sequential_embed = self.encoder2(mat)
-            final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
-            final_embed = sequential_embed
-            pred = self.classifier(final_embed)
+            # final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
+            pred = self.classifier(convolutional_embed, sequential_embed)
             pred = (pred == t.max(pred, dim=-1, keepdim=True)[0])
 
             prec = t.sum(label * pred).item()
