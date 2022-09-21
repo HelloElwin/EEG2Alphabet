@@ -8,7 +8,7 @@ file_path = './data_EEG_AI.mat'
 
 class EEGDataset():
     def __init__(self, data, label):
-        self.raw = data
+        self.data = data
         self.label = label
 
     def __len__(self):

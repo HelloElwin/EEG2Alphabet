@@ -1,4 +1,4 @@
-from data import EEGDataset, split_dataset
+from data import EEGDataset, get_datasets
 import torch.utils.data as dataloader
 from setproctitle import setproctitle
 from params import args
@@ -14,7 +14,7 @@ setproctitle('eeg@elwin')
 
 class Coach:
     def __init__(self):
-        self.trn_data, self.tst_data = get_dataset()
+        self.trn_data, self.tst_data = get_datasets()
         self.trn_loader = dataloader.DataLoader(self.trn_data, batch_size=args.trn_batch, shuffle=True)
         self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
         log('Loaded Data (=ﾟωﾟ)ﾉ')
@@ -78,23 +78,25 @@ class Coach:
 
     def test_epoch(self):
         tst_loader = self.tst_loader
-        ep_loss = 0
+        ep_prec = 0
         num = tst_loader.dataset.__len__()
         steps = num // args.tst_batch
         for i, batch_data in enumerate(tst_loader):
             batch_data = [x.cuda() for x in batch_data]
             mat, label = batch_data
             mat = t.squeeze(mat)
-            
+
             convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
             sequential_embed = self.encoder2(mat)
             final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
-            print('=== check shape', pred.shape, label.shape)
             pred = self.classifier(final_embed)
-            prec += sum(label == pred)
-            tot_num += len(pred)
+
+            print('=== check shape', pred.shape, label.shape)
+            prec = t.sum(label == pred)
+            ep_prec += prec
+            log(f'Step {i}/{steps}: precision = {prec:.3f}', online=True)
         res = dict()
-        res['precision'] = prec / tot_num
+        res['precision'] = ep_prec / num
         return res
 
 if __name__ == '__main__':

@@ -160,9 +160,9 @@ class IntermediateLayer(nn.Module):
     def __init__(self, in_dim, out_dim, dropout_prob=0.1):
         super(IntermediateLayer, self).__init__()
         self.layers = nn.Sequential(
-            nn.Linear(in_dim, in_dim * 4, bias=True),
+            nn.Linear(in_dim, in_dim * 2, bias=True),
             nn.GELU(),
-            nn.Linear(in_dim * 4, out_dim, bias=True),
+            nn.Linear(in_dim * 2, out_dim, bias=True),
             nn.Dropout(dropout_prob),
             nn.LayerNorm(out_dim)
         )
