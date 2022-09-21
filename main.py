@@ -1,10 +1,13 @@
 from data import EEGDataset, split_dataset
 import torch.utils.data as dataloader
+from setproctitle import setproctitle
 from params import args
 from model import *
 from utils import *
 import numpy as np
 import torch as t
+
+setproctitle('eeg@elwin')
 
 class Coach:
     def __init__(self):
@@ -29,11 +32,13 @@ class Coach:
         log(f'Final Test {res}')
 
     def prepare_model(self):
-        self.encoder = Encoder().cuda()
+        self.encoder1 = ResNetEncoder().cuda()
+        self.encoder2 = TransformerEncoder().cuda()
         self.classifier = Classifier().cuda()
         self.loss_func = nn.CrossEntropyLoss()
         self.opt = t.optim.Adam(
-            [{"params": self.encoder.parameters()},
+            [{"params": self.encoder1.parameters()},
+            {"params": self.encoder2.parameters()},
             {"params": self.classifier.parameters()}],
             lr=args.lr, weight_decay=0
         )
@@ -46,19 +51,15 @@ class Coach:
             batch_data = [x.cuda() for x in batch_data]
 
             mat, label = batch_data
-            # print('=== mat shape', mat.shape)
             mat = t.squeeze(mat)
-            mat = t.unsqueeze(mat, axis=1)
-            # print('=== mat shape', mat.shape)
 
-            convolutional_embed = self.encoder(mat)
-            # sequential_embed = 
-            # print('=== embed shape', convolutional_embed.shape)
-            final_embed = convolutional_embed # todo
+            convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
+            sequential_embed = self.encoder2(mat)
+            final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
             pred = self.classifier(final_embed)
 
             loss_main = self.loss_func(pred, label)
-            loss_regu = (calc_reg_loss(self.encoder) * calc_reg_loss(self.classifier)) * args.reg
+            loss_regu = (calc_reg_loss(self.encoder1) + calc_reg_loss(self.encoder2) + calc_reg_loss(self.classifier)) * args.reg
             loss = loss_main + loss_regu
 
             ep_loss += loss.item()
