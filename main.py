@@ -7,15 +7,16 @@ from utils import *
 import numpy as np
 import torch as t
 
+t.manual_seed(19260817)
+np.random.seed(19260817)
+
 setproctitle('eeg@elwin')
 
 class Coach:
     def __init__(self):
-        # trn_data, tst_data = split_dataset(raw_data, 0.1)
-        self.trn_data = EEGDataset()
-        # self.tst_data = EEGDataset(tst_data)
+        self.trn_data, self.tst_data = get_dataset()
         self.trn_loader = dataloader.DataLoader(self.trn_data, batch_size=args.trn_batch, shuffle=True)
-        # self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
+        self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
         log('Loaded Data (=ﾟωﾟ)ﾉ')
         
     def run(self):
@@ -25,7 +26,6 @@ class Coach:
             log(f'Train {ep}/{args.tst_epoch} {res}')
             if ep % args.tst_epoch == 0:
                 log(f'Test skipped O.O')
-                continue
                 res = self.test_epoch()
                 log(f'Test {ep}/{args.tst_epoch} {res}')
         res = self.test_epoch()
@@ -93,9 +93,8 @@ class Coach:
             pred = self.classifier(final_embed)
             prec += sum(label == pred)
             tot_num += len(pred)
-        log(f'Test Precision={prec / tot_num}')
         res = dict()
-        res['loss'] = ep_loss
+        res['precision'] = prec / tot_num
         return res
 
 if __name__ == '__main__':
