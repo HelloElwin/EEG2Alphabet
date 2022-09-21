@@ -83,10 +83,17 @@ class Coach:
         steps = num // args.tst_batch
         for i, batch_data in enumerate(tst_loader):
             batch_data = [x.cuda() for x in batch_data]
-            # infrence
-            # calculate loss
-            # log blablabla i / steps
-            # epoch_loss += loss
+            mat, label = batch_data
+            mat = t.squeeze(mat)
+            
+            convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
+            sequential_embed = self.encoder2(mat)
+            final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
+            print('=== check shape', pred.shape, label.shape)
+            pred = self.classifier(final_embed)
+            prec += sum(label == pred)
+            tot_num += len(pred)
+        log(f'Test Precision={prec / tot_num}')
         res = dict()
         res['loss'] = ep_loss
         return res

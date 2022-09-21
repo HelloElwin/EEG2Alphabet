@@ -8,7 +8,7 @@ init = nn.init.xavier_uniform_
 uniform_init = nn.init.uniform
 
 class Classifier(nn.Module):
-    def __init__(self, hidden_dim=512, num_classes=26):
+    def __init__(self, hidden_dim=256, num_classes=26):
         super(Classifier, self).__init__()
         self.mlp = nn.Linear(hidden_dim, num_classes)
     
@@ -59,10 +59,10 @@ class ResNetEncoder(nn.Module):
             resblock(128, 128, downsample=False)
         )
 
-        self.layer3 = nn.Sequential(
-            resblock(128, 256, downsample=True),
-            resblock(256, 256, downsample=False)
-        )
+        # self.layer3 = nn.Sequential(
+        #     resblock(128, 256, downsample=True),
+        #     resblock(256, 256, downsample=False)
+        # )
 
 
         # self.layer4 = nn.Sequential(
@@ -76,7 +76,7 @@ class ResNetEncoder(nn.Module):
         input_ = self.layer0(input_)
         input_ = self.layer1(input_)
         input_ = self.layer2(input_)
-        input_ = self.layer3(input_)
+        # input_ = self.layer3(input_)
         # input_ = self.layer4(input_)
         input_ = self.gap(input_)
         input_ = t.squeeze(input_)
@@ -88,8 +88,8 @@ class TransformerEncoder(nn.Module):
         super(TransformerEncoder, self).__init__()
         self.layers = nn.Sequential(
             TransformerLayer(in_dim=feature_dim, out_dim=64,  num_heads=4),
-            TransformerLayer(in_dim=64,          out_dim=128, num_heads=4),
-            TransformerLayer(in_dim=128,         out_dim=256, num_heads=4)
+            TransformerLayer(in_dim=64,          out_dim=128, num_heads=4)
+            # TransformerLayer(in_dim=128,         out_dim=256, num_heads=4)
         )
 
     def forward(self, x):
@@ -97,7 +97,6 @@ class TransformerEncoder(nn.Module):
         for layer in self.layers:
             embeds.append(layer(embeds[-1]))
         return t.mean(embeds[-1], axis=1)
-        # return t.sum(embeds, axis=0)
 
 class TransformerLayer(nn.Module):
     def __init__(self, in_dim, out_dim, num_heads):
@@ -141,15 +140,11 @@ class SelfAttentionLayer(nn.Module):
         key_layer = self.transpose_for_scores(mixed_key_layer)
         value_layer = self.transpose_for_scores(mixed_value_layer)
 
-        # Take the dot product between "query" and "key" to get the raw attention scores.
         attention_scores = t.matmul(query_layer, key_layer.transpose(-1, -2))
 
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
 
-        # Normalize the attention scores to probabilities.
         attention_probs = nn.Softmax(dim=-1)(attention_scores)
-        # This is actually dropping out entire tokens to attend to, which might
-        # seem a bit unusual, but is taken from the original Transformer paper.
         attention_probs = self.attn_dropout(attention_probs)
         context_layer = t.matmul(attention_probs, value_layer)
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
