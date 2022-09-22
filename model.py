@@ -13,17 +13,20 @@ class Classifier(nn.Module):
     Method: simple Multi Layer Perceptron
     Output: predictions (batch_size, 26)
     """
-    def __init__(self, hidden_dim=64, num_classes=26):
+    def __init__(self, hidden_dim=128, num_classes=26):
         super(Classifier, self).__init__()
         self.hidden_dim = hidden_dim
         self.num_classes = num_classes
-        self.mlp1 = nn.Linear(self.hidden_dim, 32)
-        self.mlp2 = nn.Linear(self.hidden_dim, 32)
-        self.mlp3 = nn.Linear(64, num_classes)
+        self.mlp1 = nn.Linear(self.hidden_dim, 64)
+        self.mlp2 = nn.Linear(self.hidden_dim, 64)
+        self.mlp3 = nn.Sequential(
+            nn.Linear(256, 128),
+            nn.Linear(128, num_classes)
+        )
     
     def forward(self, emb1, emb2):
-        emb1 = self.mlp1(emb1)
-        emb2 = self.mlp2(emb2)
+        # emb1 = self.mlp1(emb1)
+        # emb2 = self.mlp2(emb2)
         final_emb = t.cat([emb1, emb2], dim=-1)
         pred = self.mlp3(final_emb)
         return pred
@@ -95,6 +98,36 @@ class ResNetEncoder(nn.Module):
         input_ = t.squeeze(input_)
 
         return input_
+
+class TemporalTransformerEncoder(nn.Module):
+    def __init__(self, feature_dim=24):
+        super(TemporalTransformerEncoder, self).__init__()
+        self.layers = nn.Sequential(
+            TransformerLayer(in_dim=feature_dim, out_dim=32,  num_heads=4),
+            TransformerLayer(in_dim=32,          out_dim=64,  num_heads=4),
+            TransformerLayer(in_dim=64,          out_dim=128, num_heads=4)
+        )
+
+    def forward(self, x):
+        embeds = [x]
+        for layer in self.layers:
+            embeds.append(layer(embeds[-1]))
+        return t.mean(embeds[-1], axis=1)
+
+class SpatialTransformerEncoder(nn.Module):
+    def __init__(self, feature_dim=801):
+        super(SpatialTransformerEncoder, self).__init__()
+        self.layers = nn.Sequential(
+            TransformerLayer(in_dim=feature_dim, out_dim=512,  num_heads=3),
+            TransformerLayer(in_dim=512,         out_dim=256,  num_heads=4),
+            TransformerLayer(in_dim=256,         out_dim=128,  num_heads=4)
+        )
+
+    def forward(self, x):
+        embeds = [x]
+        for layer in self.layers:
+            embeds.append(layer(embeds[-1]))
+        return t.mean(embeds[-1], axis=1)
 
 class TransformerEncoder(nn.Module):
     def __init__(self, feature_dim=24):
@@ -173,9 +206,9 @@ class IntermediateLayer(nn.Module):
     def __init__(self, in_dim, out_dim, dropout_prob=0.1):
         super(IntermediateLayer, self).__init__()
         self.layers = nn.Sequential(
-            nn.Linear(in_dim, in_dim * 2, bias=True),
+            nn.Linear(in_dim, out_dim, bias=True),
             nn.GELU(),
-            nn.Linear(in_dim * 2, out_dim, bias=True),
+            # nn.Linear(in_dim * 2, out_dim, bias=True),
             nn.Dropout(dropout_prob),
             nn.LayerNorm(out_dim)
         )
