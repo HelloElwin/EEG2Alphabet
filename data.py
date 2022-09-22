@@ -12,6 +12,7 @@ class EEGDataset(data.Dataset):
     def __init__(self, data, label):
         self.data = data
         self.label = label
+        self.transposed_label = np.transpose(self.label)
 
     def __len__(self):
         return self.data.shape[0]
@@ -22,9 +23,25 @@ class EEGDataset(data.Dataset):
         data = data + t.randn(data.shape) * 0.01 # add noise to prevent overfitting
         return data, labl
 
+    def prepare_ssl_data(self):
+        """
+        Generate a list of index lists.
+        The i-th list in self.ssl_data is indexes of the i-th letter.
+        """
+        self.ssl_data = []
+        for i in range(26):
+            idx = np.argwhere(self.transposed_label[i] == 1)
+            self.ssl_data.append(idx)
+
+    def get_ssl_data(self, label_idx):
+        indexes = self.ssl_data[label_idx]
+        indexes = np.random.permutation(indexes)[:128]
+        return t.tensor(self.data[indexes], dtype=t.float32)
+
+
 def get_datasets():
     """
-    Get the dataset and split it into train and test set by 9:1
+    Get the dataset and split it into train and test set by 9:1.
     """
     try:
         trn_data, tst_data, trn_label, tst_label = pickle.load(open('./eeg_dataset.pkl', 'rb'))

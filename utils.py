@@ -13,7 +13,7 @@ def calc_reg_loss(model):
 def calc_contrastive_loss(emb1, emb2):
     emb1 = F.normalize(emb1)
     emb2 = F.normalize(emb2)
-    score = -t.log(t.sum(t.exp(t.sum(emb1 * emb2, axis=1))))
+    score = -t.log(t.sum(t.exp(t.sum(emb1 * emb2, axis=1))) + 1e-8)
     # neg = t.sum(t.exp(emb1 @ emb2.T), axis=1)
     # scr = t.sum(-t.log(pos / (neg + 1e-8) + 1e-8))
     return score 
