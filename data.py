@@ -55,12 +55,26 @@ def get_datasets():
         newLabel = np.zeros((7800, 26))
         newLabel[list(range(7800)), label - 1] = 1
         label = newLabel
-        
+
+        trn_idx = np.array([])
+        tst_idx = np.array([])
+
+        for i in range(26):
+            permu_idx = np.random.permutation(range(i * 300, (i + 1) * 300))
+            trn_idx = np.append(trn_idx, permu_idx[permu_idx.shape[0] // 10:], axis=0)
+            tst_idx = np.append(tst_idx, permu_idx[:permu_idx.shape[0] // 10], axis=0)
+
+        trn_data = raw[trn_idx.astype('int32')]
+        tst_data = raw[tst_idx.astype('int32')]
+        trn_label = label[trn_idx.astype('int32')]
+        tst_label = label[tst_idx.astype('int32')]
+        '''
         permutation_idx = np.random.permutation(len(label))
         trn_data = raw[permutation_idx][len(label) // 10:]
         tst_data = raw[permutation_idx][:len(label) // 10]
         trn_label = label[permutation_idx][len(label) // 10:]
         tst_label = label[permutation_idx][:len(label) // 10]
+        '''
 
         pickle.dump((trn_data, tst_data, trn_label, tst_label), open('./eeg_dataset.pkl', 'wb'))
 
