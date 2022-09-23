@@ -1,3 +1,4 @@
+#encoding:utf-8
 from data import EEGDataset, get_datasets
 import torch.utils.data as dataloader
 from setproctitle import setproctitle

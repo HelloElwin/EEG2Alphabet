@@ -1,6 +1,7 @@
 import torch.nn.functional as F
 from params import args
 from torch import nn
+from utils import *
 import torch as t
 import math
 
@@ -20,8 +21,8 @@ class Classifier(nn.Module):
         self.mlp1 = nn.Linear(self.hidden_dim, 64)
         self.mlp2 = nn.Linear(self.hidden_dim, 64)
         self.mlp3 = nn.Sequential(
-            nn.Linear(256, 128),
-            nn.Linear(128, num_classes)
+            nn.Linear(256, 64),
+            nn.Linear(64, num_classes)
         )
     
     def forward(self, emb1, emb2):
@@ -103,6 +104,7 @@ class TemporalTransformerEncoder(nn.Module):
     def __init__(self, feature_dim=24):
         super(TemporalTransformerEncoder, self).__init__()
         # self.pos_emb = nn.Embedding(801, 24)
+        self.pos_emb = get_pos_emb(801, 24).cuda()
         self.layers = nn.Sequential(
             TransformerLayer(in_dim=feature_dim, out_dim=32,  num_heads=4),
             TransformerLayer(in_dim=32,          out_dim=64,  num_heads=4),
@@ -110,7 +112,9 @@ class TemporalTransformerEncoder(nn.Module):
         )
 
     def forward(self, x):
-        embeds = [x] # + self.pos_emb.weight]
+        embeds = [x]
+        # embeds = [x + self.pos_emb.weight]
+        # embeds = [x + self.pos_emb]
         for layer in self.layers:
             embeds.append(layer(embeds[-1]))
         return t.mean(embeds[-1], axis=1)
@@ -119,9 +123,9 @@ class SpatialTransformerEncoder(nn.Module):
     def __init__(self, feature_dim=801):
         super(SpatialTransformerEncoder, self).__init__()
         self.layers = nn.Sequential(
-            TransformerLayer(in_dim=feature_dim, out_dim=512,  num_heads=3),
-            TransformerLayer(in_dim=512,         out_dim=256,  num_heads=4),
-            TransformerLayer(in_dim=256,         out_dim=128,  num_heads=4)
+            TransformerLayer(in_dim=feature_dim, out_dim=256,  num_heads=3),
+            TransformerLayer(in_dim=256,         out_dim=128,  num_heads=4),
+            TransformerLayer(in_dim=128,         out_dim=128,  num_heads=4)
         )
 
     def forward(self, x):
@@ -187,7 +191,6 @@ class SelfAttentionLayer(nn.Module):
         value_layer = self.transpose_for_scores(mixed_value_layer)
 
         attention_scores = t.matmul(query_layer, key_layer.transpose(-1, -2))
-
         attention_scores = attention_scores / math.sqrt(self.attention_head_size)
 
         attention_probs = nn.Softmax(dim=-1)(attention_scores)

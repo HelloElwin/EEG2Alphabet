@@ -34,7 +34,7 @@ class Coach:
         self.contrastive is used for contrastive learning (todo)
         """
         self.encoder1 = ResNetEncoder().cuda()
-        self.encoder2 = TransformerEncoder().cuda()
+        self.encoder2 = TemporalTransformerEncoder().cuda()
         self.classifier = Classifier().cuda()
         # self.contrastive = ContrastiveLearning()
         self.loss_func = nn.CrossEntropyLoss()
@@ -57,7 +57,6 @@ class Coach:
 
             convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
             sequential_embed = self.encoder2(mat)
-            # final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
             pred = self.classifier(convolutional_embed, sequential_embed)
 
             loss_main = self.loss_func(pred, label) # classification loss

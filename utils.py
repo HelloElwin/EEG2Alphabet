@@ -1,6 +1,7 @@
 import sys
 import datetime
 import torch as t
+import numpy as np
 from params import args
 import torch.nn.functional as F
 
@@ -28,3 +29,14 @@ def log(info, online=False, bold=False):
     else:
         print(info)
     sys.stdout.flush()
+
+def get_pos_emb(seq_len, dim):
+
+    def get_position_angle_vec(position):
+        return [position / np.power(10000, 2 * (dim_i // 2) / dim) for dim_i in range(dim)]
+
+    sinusoid_table = np.array([get_position_angle_vec(pos_i) for pos_i in range(seq_len)])
+    sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
+    sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
+
+    return t.FloatTensor(sinusoid_table).unsqueeze(0)
