@@ -62,7 +62,6 @@ class Coach:
 
             spatial_embed = self.encoder1(t.swapaxes(mat, -1, -2))
             sequential_embed = self.encoder2(mat)
-            # final_embed = t.cat([spatial_embed, sequential_embed], axis=-1)
             pred = self.classifier(spatial_embed, sequential_embed)
 
             loss_main = self.loss_func(pred, label) # classification loss

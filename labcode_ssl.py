@@ -1,10 +1,13 @@
 from data import EEGDataset, get_datasets
 import torch.utils.data as dataloader
+from setproctitle import setproctitle
 from params import args
 from model import *
 from utils import *
 import numpy as np
 import torch as t
+
+setproctitle('eeg@elwin')
 
 t.manual_seed(19260817)
 np.random.seed(19260817)
@@ -17,6 +20,7 @@ class Coach:
         log('Loaded Data (=ﾟωﾟ)ﾉ')
         
     def run(self):
+        best = 0
         self.prepare_model()
         for ep in range(args.trn_epoch):
             res = self.train_epoch()
@@ -24,8 +28,14 @@ class Coach:
             if ep % args.tst_epoch == 0:
                 res = self.test_epoch()
                 log(f'Test {ep}/{args.trn_epoch} {res}')
+                if res['precision'] > best:
+                    best = res['precision']
+                    log(f'Best Result: precision = {best:.4f}', bold=True)
         res = self.test_epoch()
         log(f'Final Test {res}')
+        if res['precision'] > best:
+            best = res['precision']
+        log(f'Best Result: precision = {best:.4f}', bold=True)
 
     def prepare_model(self):
         """
@@ -57,19 +67,18 @@ class Coach:
 
             spatial_embed = self.encoder1(t.swapaxes(mat, -1, -2))
             sequential_embed = self.encoder2(mat)
-            # final_embed = t.cat([spatial_embed, sequential_embed], axis=-1)
             pred = self.classifier(spatial_embed, sequential_embed)
 
             loss_main = self.loss_func(pred, label) # classification loss
             loss_regu = (calc_reg_loss(self.encoder1) + \
                     calc_reg_loss(self.encoder2) + \
                     calc_reg_loss(self.classifier)) * args.reg # weight regulation loss
-            loss_cont = calc_contrastive_loss(spatial_embed, sequential_embed) * args.cl_reg # todo this is wrong
+            loss_cont = calc_contrastive_loss(spatial_embed, sequential_embed) * args.reg_cont
             loss = loss_main + loss_regu + loss_cont
 
             ep_loss += loss.item()
             ep_loss_main += loss_main.item()
-            log(f'Step {i}/{steps}: loss = {loss:.3f}, {loss_main:.3f}, loss_regu = {loss_regu:.3f}', online=True)
+            log(f'Step {i}/{steps}: loss = {loss:.3f}, loss_main = {loss_main:.3f}, loss_regu = {loss_regu:.3f}', online=True)
 
             self.opt.zero_grad()
             loss.backward()
@@ -98,7 +107,6 @@ class Coach:
 
             spatial_embed = self.encoder1(t.swapaxes(mat, -1, -2))
             sequential_embed = self.encoder2(mat)
-            # final_embed = t.cat([spatial_embed, sequential_embed], axis=-1)
             pred = self.classifier(spatial_embed, sequential_embed)
             pred = (pred == t.max(pred, dim=-1, keepdim=True)[0])
 

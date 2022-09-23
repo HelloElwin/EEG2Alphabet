@@ -102,6 +102,7 @@ class ResNetEncoder(nn.Module):
 class TemporalTransformerEncoder(nn.Module):
     def __init__(self, feature_dim=24):
         super(TemporalTransformerEncoder, self).__init__()
+        # self.pos_emb = nn.Embedding(801, 24)
         self.layers = nn.Sequential(
             TransformerLayer(in_dim=feature_dim, out_dim=32,  num_heads=4),
             TransformerLayer(in_dim=32,          out_dim=64,  num_heads=4),
@@ -109,7 +110,7 @@ class TemporalTransformerEncoder(nn.Module):
         )
 
     def forward(self, x):
-        embeds = [x]
+        embeds = [x] # + self.pos_emb.weight]
         for layer in self.layers:
             embeds.append(layer(embeds[-1]))
         return t.mean(embeds[-1], axis=1)
@@ -135,7 +136,6 @@ class TransformerEncoder(nn.Module):
         self.layers = nn.Sequential(
             TransformerLayer(in_dim=feature_dim, out_dim=32,  num_heads=4),
             TransformerLayer(in_dim=32,          out_dim=64, num_heads=4)
-            # TransformerLayer(in_dim=128,         out_dim=256, num_heads=4)
         )
 
     def forward(self, x):
@@ -156,7 +156,7 @@ class TransformerLayer(nn.Module):
         return intermediate_output
 
 class SelfAttentionLayer(nn.Module):
-    def __init__(self, hidden_size, num_heads, dropout_prob):
+    def __init__(self, hidden_size, num_heads=4, dropout_prob=0.3):
         super(SelfAttentionLayer, self).__init__()
         self.num_attention_heads = num_heads
         self.attention_head_size = int(hidden_size / num_heads)
@@ -208,7 +208,7 @@ class IntermediateLayer(nn.Module):
         self.layers = nn.Sequential(
             nn.Linear(in_dim, out_dim, bias=True),
             nn.GELU(),
-            # nn.Linear(in_dim * 2, out_dim, bias=True),
+            # nn.Linear(in_dim, out_dim, bias=True),
             nn.Dropout(dropout_prob),
             nn.LayerNorm(out_dim)
         )

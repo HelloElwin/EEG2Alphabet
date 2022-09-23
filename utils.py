@@ -18,9 +18,13 @@ def calc_contrastive_loss(emb1, emb2):
     # scr = t.sum(-t.log(pos / (neg + 1e-8) + 1e-8))
     return score 
 
-def log(info, online=False):
-	time = datetime.datetime.now()
-	info = f'{time} {info}'
-	if online: print(info, end='\r')
-	else: print(info)
-	sys.stdout.flush()
+def log(info, online=False, bold=False):
+    time = datetime.datetime.now()
+    info = f'{time} {info}'
+    if bold:
+        info = '\033[1m' + info + '\033[0m'
+    if online:
+        print(info, end='\r')
+    else:
+        print(info)
+    sys.stdout.flush()
