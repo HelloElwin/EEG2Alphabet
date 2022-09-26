@@ -45,6 +45,7 @@ def get_datasets():
     """
     try:
         trn_data, tst_data, trn_label, tst_label = pickle.load(open('./eeg_dataset.pkl', 'rb'))
+        return trn_data, trn_label, tst_data, tst_label
         log('Loading data from pkl...')
         end_time = 600
         start_time = 200
@@ -75,6 +76,7 @@ def get_datasets():
         tst_data = raw[tst_idx.astype('int32')]
         trn_label = label[trn_idx.astype('int32')]
         tst_label = label[tst_idx.astype('int32')]
+
         '''
         permutation_idx = np.random.permutation(len(label))
         trn_data = raw[permutation_idx][len(label) // 10:]
@@ -85,4 +87,6 @@ def get_datasets():
 
         pickle.dump((trn_data, tst_data, trn_label, tst_label), open('./eeg_dataset.pkl', 'wb'))
 
+    return trn_data, trn_label, tst_data, tst_label
     return EEGDataset(trn_data, trn_label), EEGDataset(tst_data, tst_label)
+
