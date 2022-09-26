@@ -46,6 +46,13 @@ def get_datasets():
     try:
         trn_data, tst_data, trn_label, tst_label = pickle.load(open('./eeg_dataset.pkl', 'rb'))
         log('Loading data from pkl...')
+        end_time = 600
+        start_time = 200
+        trn_data = trn_data[:,start_time: end_time,:]
+        tst_data = tst_data[:,start_time: end_time,:]
+        trn_label = trn_label[:,start_time: end_time,:]
+        tst_label = tst_label[:,start_time: end_time,:]
+        args.len_time = end_time - start_time
     except:
         log('Loading and splitting data from raw...')
         raw_info = scio.loadmat(file_path)
