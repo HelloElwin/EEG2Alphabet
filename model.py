@@ -103,8 +103,8 @@ class ResNetEncoder(nn.Module):
 class TemporalTransformerEncoder(nn.Module):
     def __init__(self, feature_dim=24):
         super(TemporalTransformerEncoder, self).__init__()
-        # self.pos_emb = nn.Embedding(801, 24)
-        self.pos_emb = get_pos_emb(801, 24).cuda()
+        # self.pos_emb = nn.Embedding(args.len_time, 24)
+        self.pos_emb = get_pos_emb(args.len_time, 24).cuda()
         self.layers = nn.Sequential(
             TransformerLayer(in_dim=feature_dim, out_dim=32,  num_heads=4),
             TransformerLayer(in_dim=32,          out_dim=64,  num_heads=4),
@@ -120,7 +120,7 @@ class TemporalTransformerEncoder(nn.Module):
         return t.mean(embeds[-1], axis=1)
 
 class SpatialTransformerEncoder(nn.Module):
-    def __init__(self, feature_dim=801):
+    def __init__(self, feature_dim=args.len_time):
         super(SpatialTransformerEncoder, self).__init__()
         self.layers = nn.Sequential(
             TransformerLayer(in_dim=feature_dim, out_dim=256,  num_heads=3),

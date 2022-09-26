@@ -12,5 +12,6 @@ def ParseArgs():
     parser.add_argument('--tst_epoch', default=2, type=int, help='number of epochs')
     parser.add_argument('--trn_batch', default=256, type=int, help='batch size')
     parser.add_argument('--tst_batch', default=256, type=int, help='number of users in a testing batch')
+    parser.add_argument('--len_time',  default=801, type=int, help='number of time ')
     return parser.parse_args()
 args = ParseArgs()
