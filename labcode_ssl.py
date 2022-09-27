@@ -15,7 +15,10 @@ np.random.seed(19260817)
 
 class Coach:
     def __init__(self):
-        self.trn_data, self.tst_data = get_datasets()
+        trn_data, trn_label, tst_data, tst_label = get_datasets()
+        trn_data *= 1000
+        tst_data *= 1000
+        self.trn_data, self.tst_data = EEGDataset(trn_data, trn_label), EEGDataset(tst_data, tst_label)
         self.trn_loader = dataloader.DataLoader(self.trn_data, batch_size=args.trn_batch, shuffle=True)
         self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
         log('Loaded Data (=ﾟωﾟ)ﾉ')

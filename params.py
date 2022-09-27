@@ -14,5 +14,6 @@ def ParseArgs():
     parser.add_argument('--tst_batch', default=256, type=int, help='number of users in a testing batch')
     parser.add_argument('--len_time',  default=801, type=int, help='number of time ')
     parser.add_argument('--num_chan',  default=24, type=int, help='number of channels')
+    parser.add_argument('--dropout', default=0.5, type=float, help='dropout rate')
     return parser.parse_args()
 args = ParseArgs()

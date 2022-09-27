@@ -13,6 +13,7 @@ setproctitle('eeg@elwin')
 
 t.manual_seed(19260817)
 np.random.seed(19260817)
+tf.random.set_seed(19260817)
 
 trn_data, trn_label, tst_data, tst_label = get_datasets()
 
@@ -22,13 +23,11 @@ tst_data = np.swapaxes(tst_data, -1, -2)
 trn_data = np.expand_dims(trn_data, axis=-1)
 tst_data = np.expand_dims(tst_data, axis=-1)
 
-print(trn_data.shape)
-
 trn_data *= 1000
 tst_data *= 1000
 
 model = EEGNet(nb_classes = 26, Chans = args.num_chan, Samples = args.len_time,
-               dropoutRate = 0.5, kernLength = 32, F1 = 8, D = 2, F2 = 16,
+               dropoutRate = args.dropout, kernLength = 32, F1 = 8, D = 2, F2 = 16,
                dropoutType = 'Dropout')
 
 model.compile(loss='categorical_crossentropy', optimizer='adam',

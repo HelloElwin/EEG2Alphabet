@@ -21,7 +21,7 @@ class Classifier(nn.Module):
         self.mlp1 = nn.Linear(self.hidden_dim, 64)
         self.mlp2 = nn.Linear(self.hidden_dim, 64)
         self.mlp3 = nn.Sequential(
-            nn.Linear(256, 64),
+            nn.Linear(128, 64),
             nn.Linear(64, num_classes)
         )
     
@@ -107,8 +107,8 @@ class TemporalTransformerEncoder(nn.Module):
         self.pos_emb = get_pos_emb(args.len_time, 24).cuda()
         self.layers = nn.Sequential(
             TransformerLayer(in_dim=feature_dim, out_dim=32,  num_heads=4),
-            TransformerLayer(in_dim=32,          out_dim=64,  num_heads=4),
-            TransformerLayer(in_dim=64,          out_dim=128, num_heads=4)
+            TransformerLayer(in_dim=32,          out_dim=64,  num_heads=8)
+            # TransformerLayer(in_dim=64,          out_dim=128, num_heads=4)
         )
 
     def forward(self, x):
@@ -123,9 +123,9 @@ class SpatialTransformerEncoder(nn.Module):
     def __init__(self, feature_dim=args.len_time):
         super(SpatialTransformerEncoder, self).__init__()
         self.layers = nn.Sequential(
-            TransformerLayer(in_dim=feature_dim, out_dim=256,  num_heads=3),
-            TransformerLayer(in_dim=256,         out_dim=128,  num_heads=4),
-            TransformerLayer(in_dim=128,         out_dim=128,  num_heads=4)
+            TransformerLayer(in_dim=feature_dim, out_dim=128,  num_heads=5),
+            TransformerLayer(in_dim=128,         out_dim=64,   num_heads=8)
+            # TransformerLayer(in_dim=128,         out_dim=128,  num_heads=4)
         )
 
     def forward(self, x):
@@ -151,8 +151,8 @@ class TransformerEncoder(nn.Module):
 class TransformerLayer(nn.Module):
     def __init__(self, in_dim, out_dim, num_heads):
         super(TransformerLayer, self).__init__()
-        self.attention = SelfAttentionLayer(in_dim, num_heads, dropout_prob=0.3)
-        self.intermediate = IntermediateLayer(in_dim, out_dim, dropout_prob=0.1)
+        self.attention = SelfAttentionLayer(in_dim, num_heads, dropout_prob=0.5) # 0.3
+        self.intermediate = IntermediateLayer(in_dim, out_dim, dropout_prob=0.3) # 0.1
 
     def forward(self, x):
         attention_output = self.attention(x)
