@@ -1,3 +1,4 @@
+*.error.log
 *.mat
 *.pkl
 **/__pycache__

@@ -4,6 +4,24 @@ from utils import log
 import numpy as np
 import pickle
 
+def get_eval_datasets():
+    log('Loading evaluation data...')
+
+    ####### Load Evaluation Data ####### 
+    raw_info = scio.loadmat('./dataset/data.mat')
+    raw = raw_info["data"] # (24, 801, 7800)
+    label = np.squeeze(raw_info["label"])
+    ####### Load Evaluation Data ####### 
+
+    raw = np.swapaxes(raw, 0, -1)
+    newLabel = np.zeros((7800, 26))
+    newLabel[list(range(7800)), label - 1] = 1
+    label = newLabel
+
+    _, tst_data = slice_time(raw, raw)
+
+    return tst_data, label
+
 def slice_time(trn_data, tst_data, start_time=50, end_time=700):
         trn_data = trn_data[:,start_time:end_time,:]
         tst_data = tst_data[:,start_time:end_time,:]
@@ -39,7 +57,7 @@ def get_datasets():
     label = newLabel
 
     trn_data, trn_label, tst_data, tst_label = split_data(raw, label)
-    pickle.dump((trn_data, tst_data, trn_label, tst_label), open('./eeg_dataset.pkl', 'wb'))
+    # pickle.dump((trn_data, tst_data, trn_label, tst_label), open('./eeg_dataset.pkl', 'wb'))
     trn_data, tst_data = slice_time(trn_data, tst_data)
 
     return trn_data, trn_label, tst_data, tst_label

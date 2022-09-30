@@ -26,11 +26,11 @@ scipy>=1.7.3
 
 ### Evaluation
 
-Please put the evaluation dataset in the folder `dataset` and rename it as `data.mat`. Then
+Please put the evaluation dataset in the folder `dataset` and rename it as `data.mat`. The whole dataset will be used for evaluation.
 
 - For method 1 please run `python ./method1/main.py --eval` 
 
-- For method 2 please run `python ./method2/main.py --eval`
+- For method 2 please run `python ./method2/main.py --eval 2> .error.log`
 
 ## Methods
 
@@ -48,13 +48,13 @@ We also build an classifier based on EEGNet, the state-of-art model for EEG clas
 
 ## Train the Models
 
-Train the EEGNet version, highest precision is about 14%.
+Method 1:
 
-`python labcode_eegnet.py --dropout 0.3`
+`python method1/main.py --dropout 0.3`
 
-Train the Transformer & Self-Supervised Learning version, highest precision is about 8.9%.
+Method 2:
 
-`python labcode_ssl.py --reg 1e-6 --reg_cont 1e-8 --len_time 650` 
+`python method2/main.py --reg 1e-6 --reg_cont 1e-8 --len_time 650` 
 
 ### Data Preprocessing
 

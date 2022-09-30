@@ -1,7 +1,7 @@
 #encoding:utf-8
-from data import EEGDataset, get_datasets
 import torch.utils.data as dataloader
 from params import args
+from data import *
 from model import *
 from utils import *
 import numpy as np
@@ -12,17 +12,44 @@ np.random.seed(19260817)
 
 class Coach:
     def __init__(self):
-        trn_data, trn_label, tst_data, tst_label = get_datasets()
-        trn_data *= 1000
-        tst_data *= 1000
-        self.trn_data, self.tst_data = EEGDataset(trn_data, trn_label), EEGDataset(tst_data, tst_label)
-        self.trn_loader = dataloader.DataLoader(self.trn_data, batch_size=args.trn_batch, shuffle=True)
-        self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
-        log('Loaded Data (=ﾟωﾟ)ﾉ')
+        if args.eval:
+            tst_data, tst_label = get_eval_datasets()
+            tst_data *= 1000
+            self.tst_data = EEGDataset(tst_data, tst_label)
+            self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
+        else:
+            trn_data, trn_label, tst_data, tst_label = get_datasets()
+            trn_data *= 1000
+            tst_data *= 1000
+            self.trn_data, self.tst_data = EEGDataset(trn_data, trn_label), EEGDataset(tst_data, tst_label)
+            self.trn_loader = dataloader.DataLoader(self.trn_data, batch_size=args.trn_batch, shuffle=True)
+            self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
+            log('Loaded Data (=ﾟωﾟ)ﾉ')
+
+    def save_model(self):
+        content = {
+            'encoder1': self.encoder1.state_dict(),
+            'encoder2': self.encoder2.state_dict(),
+            'classifier': self.classifier.state_dict()
+        }
+        t.save(content, './ckpt/method1_best.ckpt')
+        log('Model Saved', bold=True)
+
+    def load_model(self):
+        ckp = t.load('./ckpt/method1_best.ckpt')
+        self.encoder1.load_state_dict(ckp['encoder1'])
+        self.encoder2.load_state_dict(ckp['encoder2'])
+        self.classifier.load_state_dict(ckp['classifier'])
+        log('Model Loaded!')
         
     def run(self):
         best = 0
         self.prepare_model()
+        if args.eval:
+            self.load_model()
+            res = self.test_epoch()
+            log(f"Evaluation accuracy = {res['precision']}", bold=True)
+            exit()
         for ep in range(args.trn_epoch):
             res = self.train_epoch()
             log(f'Train {ep}/{args.trn_epoch} {res}')
@@ -32,10 +59,12 @@ class Coach:
                 if res['precision'] > best:
                     best = res['precision']
                     log(f'Best Result: precision = {best:.4f}', bold=True)
+                    self.save_model()
         res = self.test_epoch()
         log(f'Final Test {res}')
         if res['precision'] > best:
             best = res['precision']
+            self.save_model()
         log(f'Best Result: precision = {best:.4f}', bold=True)
 
     def prepare_model(self):
@@ -57,6 +86,9 @@ class Coach:
         )
 
     def train_epoch(self):
+        self.encoder1.train()
+        self.encoder2.train()
+        self.classifier.train()
         ep_loss, ep_loss_main, ep_prec = 0, 0, 0
         trn_loader = self.trn_loader
         steps = trn_loader.dataset.__len__() // args.trn_batch
@@ -97,6 +129,9 @@ class Coach:
         return res
 
     def test_epoch(self):
+        self.encoder1.eval()
+        self.encoder2.eval()
+        self.classifier.eval()
         tst_loader = self.tst_loader
         ep_prec = 0
         num = tst_loader.dataset.__len__()

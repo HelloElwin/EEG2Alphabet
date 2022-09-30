@@ -7,5 +7,6 @@ def ParseArgs():
     parser.add_argument('--len_time',  default=650, type=int, help='number of time ')
     parser.add_argument('--num_chan',  default=24, type=int, help='number of channels')
     parser.add_argument('--dropout', default=0.5, type=float, help='dropout rate')
+    parser.add_argument('--eval', action='store_true', help='do evaluation only')
     return parser.parse_args()
 args = ParseArgs()
