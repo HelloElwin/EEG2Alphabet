@@ -2,6 +2,7 @@
 from data import EEGDataset, get_datasets
 import torch.utils.data as dataloader
 from setproctitle import setproctitle
+import tensorflow as tf
 from params import args
 from EEGNet import *
 from model import *
