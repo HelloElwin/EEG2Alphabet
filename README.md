@@ -66,6 +66,7 @@ We use [filter-bank](https://github.com/HelloElwin/EEG/tree/main/preprocessing):
 | 4-8 Hz    | https://connecthkuhk-my.sharepoint.com/:u:/g/personal/nebula_connect_hku_hk/EXFzzPKUFndEgDzWabPcFdUBA1B55v11hd2bkbcrpGhQGQ?e=U8zFcF |
 | 8-12 Hz   | https://connecthkuhk-my.sharepoint.com/:u:/g/personal/nebula_connect_hku_hk/EVsLUCk_chZOlMm694SAyHEBHDzxQ0nlHi_UCK4llGwxwg?e=4uRljB |
 | 12- 15 Hz | https://connecthkuhk-my.sharepoint.com/:u:/g/personal/nebula_connect_hku_hk/EWEnpqbNMxVBnth72JKjs5EBIYy49A-xKYYaPun_d4B_Kg?e=BnQxQC |
+| 0.1-20 Hz | https://connecthkuhk-my.sharepoint.com/:u:/g/personal/nebula_connect_hku_hk/EddN6QuO_jRBuEQu-5YnNAsBbvC1HI-DnC2-JwYLu_EQPg?e=V4oszj |
 
 
 ## Acknowledgement
