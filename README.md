@@ -1,22 +1,52 @@
 # EEG Alphabet Classifier
 
-## Train Model
+In this repository, two solutions are proposed and implemented for the *HK EEG + AI competition*.
 
-Train the EEGNet version, highest precision is about 14%.
+## Usage
 
-`python labcode_eegnet.py --dropout 0.3`
+### Requirements
 
-Train the Transformer & Self-Supervised Learning version, highest precision is about 8.9%.
+Environment for Method 1:
 
-`python labcode_ssl.py --reg 1e-6 --reg_cont 1e-8`
+```markdown
+python==3.8
+pytorch>=1.12.1
+numpy>=1.21.5
+scipy>=1.7.3
+```
+
+Environment for Method 2:
+
+```markdown
+python==3.8
+tensorflow>=2.10.0
+numpy>=1.21.5
+scipy>=1.7.3
+```
+
+### Evaluation
+
+Please put the evaluation dataset in the folder `dataset` and rename it as `data.mat`. Then
+
+- For method 1 please run `python ./method1/main.py --eval` 
+
+- For method 2 please run `python ./method2/main.py --eval`
 
 ## Methods
 
-1. `labcode_ssl.py` 两个 Transformer 建模，拉近同一样本的两个表征
-2. `labcode_eegnet.py` 使用 EEGNet
-3. `labcode_clustering.py` 建模方法同上，拉近同一标签的样本，推远不同标签的样本# EEG Alphabet Classifier
+### 1 Spatial-Temporal Transformer with Contrastive Learning
 
-## Train Model
+Link to code: [[Method 1]](./method1/)
+
+We build two transformers to encode information from both time (temporal) and channel (spatial) domain of the EEG data. Embeddings from these two views are concatenated and fed into an MLP for the final classification task. To tackle the noise problem of EEG data and introduce more supervision signal, we further consider the temporal and spatial embeddings as two different views and perform contrastive learing between them.
+
+### 2 EEGNet-based Classification
+
+Link to code: [[Method 2]](./method2/)
+
+We also build an classifier based on EEGNet, the state-of-art model for EEG classification task. Experiments on model structure and hyperparameter are performed to better apply the model to our dataset.
+
+## Train the Models
 
 Train the EEGNet version, highest precision is about 14%.
 
@@ -24,9 +54,9 @@ Train the EEGNet version, highest precision is about 14%.
 
 Train the Transformer & Self-Supervised Learning version, highest precision is about 8.9%.
 
-`python labcode_ssl.py --reg 1e-6 --reg_cont 1e-8`
+`python labcode_ssl.py --reg 1e-6 --reg_cont 1e-8 --len_time 650` 
 
-### Preprocessing
+### Data Preprocessing
 
 We use [filter-bank](https://github.com/HelloElwin/EEG/tree/main/preprocessing):
 
@@ -38,19 +68,6 @@ We use [filter-bank](https://github.com/HelloElwin/EEG/tree/main/preprocessing):
 | 12- 15 Hz | https://connecthkuhk-my.sharepoint.com/:u:/g/personal/nebula_connect_hku_hk/EWEnpqbNMxVBnth72JKjs5EBIYy49A-xKYYaPun_d4B_Kg?e=BnQxQC |
 
 
-
-## Methods
-
-1. `labcode_ssl.py` 两个 Transformer 建模，拉近同一样本的两个表征
-2. `labcode_eegnet.py` 使用 EEGNet
-3. `labcode_clustering.py` 建模方法同上，拉近同一标签的样本，推远不同标签的样本
-
-
 ## Acknowledgement
 
 The code for EEGNet is based on [[this repo]](https://github.com/vlawhern/arl-eegmodels).
-
-## Acknowledgement
-
-The code for EEGNet is based on [[this repo]](https://github.com/vlawhern/arl-eegmodels).
-

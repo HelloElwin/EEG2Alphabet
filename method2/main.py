@@ -1,18 +1,11 @@
 #encoding:utf-8
 from data import EEGDataset, get_datasets
-import torch.utils.data as dataloader
-from setproctitle import setproctitle
 import tensorflow as tf
 from params import args
-from EEGNet import *
 from model import *
 from utils import *
 import numpy as np
-import torch as t
 
-setproctitle('eeg@elwin')
-
-t.manual_seed(19260817)
 np.random.seed(19260817)
 tf.random.set_seed(19260817)
 

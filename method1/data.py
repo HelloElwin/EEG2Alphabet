@@ -6,8 +6,6 @@ import numpy as np
 import torch as t
 import pickle
 
-file_path = './data_EEG_AI.mat'
-
 class EEGDataset(data.Dataset):
     def __init__(self, data, label):
         self.data = data
@@ -63,28 +61,18 @@ def split_data(raw, label, train_ratio=0.9):
     return trn_data, trn_label, tst_data, tst_label
 
 def get_datasets():
-    """
-    Get the dataset and split it into train and test set by 9:1.
-    """
-    try:
-        log('Loading data from pkl...')
-        trn_data, tst_data, trn_label, tst_label = pickle.load(open('./eeg_dataset.pkl', 'rb'))
-        trn_data, tst_data = slice_time(trn_data, tst_data)
-        return trn_data, trn_label, tst_data, tst_label
-    except:
-        log('Failed.')
-        log('Loading and splitting data from raw...')
-        raw_info = scio.loadmat(file_path)
-        raw = raw_info["data"] # (24, 801, 7800)
-        raw = np.swapaxes(raw, 0, -1)
-        label = np.squeeze(raw_info["label"])
-        newLabel = np.zeros((7800, 26))
-        newLabel[list(range(7800)), label - 1] = 1
-        label = newLabel
+    log('Loading and splitting data from raw...')
+    raw_info = scio.loadmat('./dataset/' + args.data + '.mat')
+    raw = raw_info["data"] # (24, 801, 7800)
+    raw = np.swapaxes(raw, 0, -1)
+    label = np.squeeze(raw_info["label"])
+    newLabel = np.zeros((7800, 26))
+    newLabel[list(range(7800)), label - 1] = 1
+    label = newLabel
 
-        trn_data, trn_label, tst_data, tst_label = split_data(raw, label)
-        pickle.dump((trn_data, tst_data, trn_label, tst_label), open('./eeg_dataset.pkl', 'wb'))
-        trn_data, tst_data = slice_time(trn_data, tst_data)
+    trn_data, trn_label, tst_data, tst_label = split_data(raw, label)
+    pickle.dump((trn_data, tst_data, trn_label, tst_label), open('./eeg_dataset.pkl', 'wb'))
+    trn_data, tst_data = slice_time(trn_data, tst_data)
 
     return trn_data, trn_label, tst_data, tst_label
 

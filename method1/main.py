@@ -1,3 +1,4 @@
+#encoding:utf-8
 from data import EEGDataset, get_datasets
 import torch.utils.data as dataloader
 from params import args
@@ -11,12 +12,16 @@ np.random.seed(19260817)
 
 class Coach:
     def __init__(self):
-        self.trn_data, self.tst_data = get_datasets()
+        trn_data, trn_label, tst_data, tst_label = get_datasets()
+        trn_data *= 1000
+        tst_data *= 1000
+        self.trn_data, self.tst_data = EEGDataset(trn_data, trn_label), EEGDataset(tst_data, tst_label)
         self.trn_loader = dataloader.DataLoader(self.trn_data, batch_size=args.trn_batch, shuffle=True)
         self.tst_loader = dataloader.DataLoader(self.tst_data, batch_size=args.tst_batch, shuffle=False)
         log('Loaded Data (=ﾟωﾟ)ﾉ')
         
     def run(self):
+        best = 0
         self.prepare_model()
         for ep in range(args.trn_epoch):
             res = self.train_epoch()
@@ -24,8 +29,14 @@ class Coach:
             if ep % args.tst_epoch == 0:
                 res = self.test_epoch()
                 log(f'Test {ep}/{args.trn_epoch} {res}')
+                if res['precision'] > best:
+                    best = res['precision']
+                    log(f'Best Result: precision = {best:.4f}', bold=True)
         res = self.test_epoch()
         log(f'Final Test {res}')
+        if res['precision'] > best:
+            best = res['precision']
+        log(f'Best Result: precision = {best:.4f}', bold=True)
 
     def prepare_model(self):
         """
@@ -33,7 +44,7 @@ class Coach:
         self.classifier is used to classify the embeddings
         self.contrastive is used for contrastive learning (todo)
         """
-        self.encoder1 = ResNetEncoder().cuda()
+        self.encoder1 = SpatialTransformerEncoder().cuda()
         self.encoder2 = TemporalTransformerEncoder().cuda()
         self.classifier = Classifier().cuda()
         # self.contrastive = ContrastiveLearning()
@@ -55,20 +66,20 @@ class Coach:
             mat, label = batch_data
             mat = t.squeeze(mat) # a batch of EEG samples, (batch_size, num_time_points, num_electrodes)
 
-            convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
+            spatial_embed = self.encoder1(t.swapaxes(mat, -1, -2))
             sequential_embed = self.encoder2(mat)
-            pred = self.classifier(convolutional_embed, sequential_embed)
+            pred = self.classifier(spatial_embed, sequential_embed)
 
             loss_main = self.loss_func(pred, label) # classification loss
             loss_regu = (calc_reg_loss(self.encoder1) + \
                     calc_reg_loss(self.encoder2) + \
                     calc_reg_loss(self.classifier)) * args.reg # weight regulation loss
-            # loss_cont = calc_contrastive_loss(convolutional_embed, sequential_embed) * args.cl_reg # todo this is wrong
-            loss = loss_main + loss_regu # + loss_cont
+            loss_cont = calc_contrastive_loss(spatial_embed, sequential_embed) * args.reg_cont
+            loss = loss_main + loss_regu + loss_cont
 
             ep_loss += loss.item()
             ep_loss_main += loss_main.item()
-            log(f'Step {i}/{steps}: loss = {loss:.3f}, {loss_main:.3f}, loss_regu = {loss_regu:.3f}', online=True)
+            log(f'Step {i}/{steps}: loss = {loss:.3f}, loss_main = {loss_main:.3f}, loss_regu = {loss_regu:.3f}', online=True)
 
             self.opt.zero_grad()
             loss.backward()
@@ -95,10 +106,9 @@ class Coach:
             mat, label = batch_data
             mat = t.squeeze(mat)
 
-            convolutional_embed = self.encoder1(t.unsqueeze(mat, axis=1))
+            spatial_embed = self.encoder1(t.swapaxes(mat, -1, -2))
             sequential_embed = self.encoder2(mat)
-            # final_embed = t.cat([convolutional_embed, sequential_embed], axis=-1)
-            pred = self.classifier(convolutional_embed, sequential_embed)
+            pred = self.classifier(spatial_embed, sequential_embed)
             pred = (pred == t.max(pred, dim=-1, keepdim=True)[0])
 
             prec = t.sum(label * pred).item()
