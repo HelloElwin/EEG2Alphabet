@@ -13,11 +13,9 @@ scipy>=1.7.3
 
 ### Evaluation
 
-Please put the evaluation dataset in the folder `dataset` and rename it as `data.mat`. The whole dataset will be used for evaluation.
+Firstly, please put the evaluation dataset in the folder `dataset` and rename it as `data.mat`. The whole dataset will be used for evaluation.
 
-Please run:
-
-`python src/main.py --eval 2> .error.log`
+Then please run: `python src/main.py --eval 2> .error.log` to evaluate the model.
 
 ## Method
 
