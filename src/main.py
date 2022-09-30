@@ -32,11 +32,11 @@ class Coach:
             'encoder2': self.encoder2.state_dict(),
             'classifier': self.classifier.state_dict()
         }
-        t.save(content, './ckpt/method1_best.ckpt')
+        t.save(content, './ckpt/best.ckpt')
         log('Model Saved', bold=True)
 
     def load_model(self):
-        ckp = t.load('./ckpt/method1_best.ckpt')
+        ckp = t.load('./ckpt/best.ckpt')
         self.encoder1.load_state_dict(ckp['encoder1'])
         self.encoder2.load_state_dict(ckp['encoder2'])
         self.classifier.load_state_dict(ckp['classifier'])
