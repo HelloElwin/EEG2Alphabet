@@ -38,13 +38,13 @@ Please put the evaluation dataset in the folder `dataset` and rename it as `data
 
 Link to code: [[Method 1]](./method1/)
 
-We build two transformers to encode information from both time (temporal) and channel (spatial) domain of the EEG data. Embeddings from these two views are concatenated and fed into an MLP for the final classification task. To tackle the noise problem of EEG data and introduce more supervision signal, we further consider the temporal and spatial embeddings as two different views and perform contrastive learing between them.
+We build two transformers to encode information from both time (temporal) and channel (spatial) domain of the EEG data. Embeddings from these two views are concatenated and fed into an MLP for the final classification task. To tackle the noise problem of EEG data and introduce more supervision signal, we further consider the temporal and spatial embeddings as two contrastive views and perform contrastive learing between them. Additionally, to further reduce noise in the data, we only choose the `0~2600ms` part of every sample.
 
 ### 2 EEGNet-based Classification
 
 Link to code: [[Method 2]](./method2/)
 
-We also build an classifier based on EEGNet, the state-of-art model for EEG classification task. Experiments on model structure and hyperparameter are performed to better apply the model to our dataset.
+We also build an classifier based on EEGNet, the state-of-the-art model for EEG classification task. Experiments on model structure and hyperparameter are performed to better apply the model to our dataset. Additionally, to further reduce noise in the data, we only choose the `0~2600ms` part of every sample. 
 
 ## Train the Models
 
